@@ -5,23 +5,33 @@ from collisions import is_colliding
 from random import randint
 import time
 
-#30, 184, 245
+
+bird_width = 40
+bird_height = 28.5
+pipe_width = 50
+pipe_height = (1499 / 244) * pipe_width
+gap = 130
+pipe_vel = -1
+pipes = []
+has_started = False
 
 
 def generate_pipe_pair(width, gap, pipes):
     h1 = randint(50, 300)
     pipes.append(entities.Entity(900, 0, pipe_vel, width, h1))
-    pipes.append(entities.Entity(900, h1+gap, pipe_vel, width, 504-(h1+gap)))
+    pipes.append(entities.Entity(900, h1 + gap, pipe_vel, width, 504 - (h1 + gap)))
 
 
-bird_width = 40
-bird_height = 28.5
-pipe_width = 50
-pipe_height = (1499/244)*pipe_width
-gap = 130
-pipe_vel = -1
-pipes = []
-has_started = False
+def restart(p):
+    p.x_pos = 100
+    p.y_pos = 300
+    p.x_vel = 0
+    p.y_vel = 0
+    p.is_dead = False
+    global has_started
+    has_started = False
+    pipes.clear()
+
 
 generate_pipe_pair(pipe_width, gap, pipes)
 p = entities.Player(100, 300, 0, bird_width, bird_height)
@@ -29,13 +39,13 @@ p = entities.Player(100, 300, 0, bird_width, bird_height)
 pygame.init()
 screen = pygame.display.set_mode((900, 504))
 done = False
-background = pygame.image.load('Images/background.png')
+background = pygame.image.load("Images/background.png")
 # 12*17, 630*450
-bird = pygame.image.load('Images/bird.png')
+bird = pygame.image.load("Images/bird.png")
 bird = pygame.transform.scale(bird, (bird_width, bird_height))
-pipe_img = pygame.image.load('Images/pipe.png')
+pipe_img = pygame.image.load("Images/pipe.png")
 pipe_img = pygame.transform.scale(pipe_img, (pipe_width, pipe_height))
-pipeR_img = pygame.image.load('Images/pipeR.png')
+pipeR_img = pygame.image.load("Images/pipeR.png")
 pipeR_img = pygame.transform.scale(pipeR_img, (pipe_width, pipe_height))
 
 while not done:
@@ -52,8 +62,8 @@ while not done:
     if p.y_pos < 0:
         p.y_pos = 0
         p.y_vel = 0
-    elif p.y_pos >= 504-bird_height:
-        p.y_pos = 504-bird_height
+    elif p.y_pos >= 504 - bird_height:
+        p.y_pos = 504 - bird_height
         p.y_vel = 0
         p.is_dead = True
     else:
@@ -71,14 +81,23 @@ while not done:
         pipes.pop(0)
 
     # generate new pipes
-    if pipes[len(pipes)-1].x_pos < 700:
+    if pipes[len(pipes) - 1].x_pos < 700:
         generate_pipe_pair(pipe_width, gap, pipes)
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             done = True
-        if event.type == pygame.KEYDOWN and not p.is_dead and event.key == pygame.K_SPACE:
+        if (
+            event.type == pygame.KEYDOWN
+            and not p.is_dead
+            and event.key == pygame.K_SPACE
+        ):
             p.jump()
+
+        if event.type == pygame.KEYDOWN and p.is_dead and event.key == pygame.K_r:
+            restart(p)
+            generate_pipe_pair(pipe_width, gap, pipes)
+            continue
 
     screen.blit(background, (0, 0))
     # rotate bird
